@@ -1,0 +1,1053 @@
+__=
+
+	
+
+-- Credits to Elegant & Fulcrum.#2610, the original script coders!!
+
+-- DO NOT EDIT BELOW IF YOU DON'T KNOW WHAT YOU'RE DOING!!
+
+repeat wait() until game:IsLoaded()
+
+loadstring(game:HttpGet("https://pastebin.com/raw/JFzC7iXS"))()
+
+-- Variables
+
+local NotifLib = loadstring(game:HttpGet("https://pastebin.com/raw/KRep3e1w"))()
+
+local TargBindEnabled, CamBindEnabled = false, false
+
+local Player = game.Players.LocalPlayer
+
+local RunService = game.RunService
+local UserInputService = game.UserInputService
+
+local NoRecIndex, TargNamecall, AntiCheatNamecall
+
+local StrafeSpeed = 0
+
+local TargCursorDot = Drawing.new("Circle")
+local TargFovCircle = Drawing.new("Circle")
+
+local TargTracerLine = Drawing.new("Line")
+
+local SelfDotCircle = Drawing.new("Circle")
+local CamFovCircle = Drawing.new("Circle")
+
+local TargetPlrStats = Instance.new("ScreenGui")
+
+local Picture = Instance.new("ImageLabel")
+local NameOfTarget = Instance.new("TextLabel")
+
+local UIGradient1 = Instance.new("UIGradient")
+local UIGradient2 = Instance.new("UIGradient")
+local UIGradient3 = Instance.new("UIGradient")
+local UIGradient4 = Instance.new("UIGradient")
+
+local TargDotParent = Instance.new("Part", workspace)
+local TargDotBillboard = Instance.new("BillboardGui", TargDotParent)
+
+local Top = Instance.new("Frame")
+local Background = Instance.new("Frame")
+local HealthBarBackground = Instance.new("Frame")
+local HealthBar = Instance.new("Frame")
+local TargDotFrame = Instance.new("Frame", TargDotBillboard)
+
+local TargDotUiCorner = Instance.new("UICorner", TargDotFrame)
+local Highlight = Instance.new("Highlight", game.CoreGui)
+
+local Utilities = {
+	NoJumpCooldown = false, 
+	AntiStomp = false, 
+	NoSlowdown = false
+}
+
+local TargetAimbot = {
+	Enabled = false, 
+	Keybind = nil, 
+
+	Prediction = nil, 
+	Resolver = false, 
+
+	JumpOffset = 0, 
+	RealJumpOffset = nil, 
+
+	HitParts = {"HumanoidRootPart"}, 
+	RealHitPart = nil, 
+
+	Notifications = false, 
+
+	LookAt = false, 
+	ViewAt = false, 
+
+	Dot = false, 
+	Tracer = false, 
+
+	DotOnCursor = false, 
+	Highlight = false, 
+	Stats = false, 
+
+	UseFov = false
+}
+
+local CameraAimbot = {
+	Enabled = false, 
+	Keybind = nil, 
+
+	Prediction = nil, 
+	Resolver = false, 
+
+	HitPart = "HumanoidRootPart", 
+
+	Notifications = false, 
+
+	JumpOffset = 0, 
+	RealJumpOffset = nil, 
+
+	Smoothness = false, 
+	Smoothing = nil, 
+
+	UseFov = false
+}
+
+local Movement = {
+	SpeedEnabled = false, 
+	SpeedAmount = 1, 
+
+	AutoJump = false, 
+
+	StrafeEnabled = false, 
+	StrafeSpeed = 1, 
+	StrafeDistance = 1, 
+	StrafeHeight = 1, 
+
+	FlightEnabled = false, 
+	FlightSpeed = 1
+}
+
+local SelfDot = {
+	Enabled = false, 
+
+	RandomAimPart = false, 
+	Prediction = 1, 
+	AimPart = "HumanoidRootPart", 
+	OldAimPart = nil
+}
+
+local AntiLock = {
+	Enabled = false, 
+	Mode = "Custom", -- "Custom", "Prediction Changer", "Prediction Disabler", "Up", "Down", "Prediction Tripler", "Prediction Reverser", "LookVector", "AirOrthodox", "Prediction Multiplier", "Spinbot Desync"
+
+	CustomX = 10000, 
+	CustomY = 10000, 
+	CustomZ = 10000, 
+
+	LookVecAmt = 500, 
+	PredChangeAmt = 5, 
+
+	DesyncVel = Vector3.new(9e9, 9e9, 9e9), 
+	DesyncAngles = 0.5
+}
+
+-- Functions
+
+function ClosestPlr(UseFov, FovCircle)
+	local Distance, Closest = math.huge, nil
+
+	for I, Target in pairs(game.Players:GetPlayers()) do
+		if Target ~= Player then
+			local Pos = workspace.CurrentCamera:WorldToViewportPoint(Target.Character.PrimaryPart.Position)
+			local Magnitude = (Vector2.new(Pos.X, Pos.Y) - UserInputService:GetMouseLocation()).Magnitude
+
+			if UseFov then
+				if Magnitude < Distance and Magnitude < FovCircle.Radius then
+					Closest = Target
+					Distance = Magnitude
+				end
+			else
+				if Magnitude < Distance then
+					Closest = Target
+					Distance = Magnitude
+				end
+			end
+		end
+	end
+
+	return Closest
+end
+
+-- Stuff
+
+game.CorePackages.Packages:Destroy()
+
+getrawmetatable = getrawmetatable
+Drawing = Drawing
+Actyrn7104 = Actyrn7104
+getnamecallmethod = getnamecallmethod
+hookmetamethod = hookmetamethod
+getcallingscript = getcallingscript
+library = library
+
+library:CheckErrors(true, true, Player, __, Actyrn7104) -- If you remove there's a chance script wont work, DON'T REMOVE !!
+
+local Actyrn_7104 = library:CreateWindow("Azure Modded | Actyrn#7104 | .gg/wDngb2mv4H", Vector2.new(490, 590), Enum.KeyCode.RightShift)
+
+-- Tabs
+
+local MainTab = Actyrn_7104:CreateTab("Main")
+local MiscTab = Actyrn_7104:CreateTab("Misc")
+
+-- MAIN
+
+local UtilitiesSec = MainTab:CreateSector("Utilities", "right")
+local TargetAimbotSec = MainTab:CreateSector("Target Aimbot", "left") 
+local CameraAimbotSec = MainTab:CreateSector("Camera Aimbot", "right")
+
+-- MISC
+
+local MovementSec = MiscTab:CreateSector("Movement", "left")
+local SelfDotSec = MiscTab:CreateSector("Self Dot", "left")
+local AntiLockSec = MiscTab:CreateSector("Anti Lock", "right")
+
+-- Toggles
+
+-- MAIN
+
+-- Utilities
+
+local NoJumpCdToggle = UtilitiesSec:AddToggle("No Jump Cooldown", false, function(Value)
+	Utilities.NoJumpCooldown = Value
+end)
+
+UtilitiesSec:AddToggle("Anti Stomp", false, function(Value)
+	Utilities.AntiStomp = Value
+end)
+
+UtilitiesSec:AddToggle("No Slowdown", false, function(Value)
+	Utilities.NoSlowdown = Value
+end)
+
+-- Target Aimbot
+
+TargetAimbotSec:AddToggle("Enabled", false, function(Value)
+	TargetAimbot.Enabled = Value
+end)
+
+TargetAimbotSec:AddKeybind("Keybind", nil, function(Value)
+	TargetAimbot.Keybind = Value
+end)
+
+TargetAimbotSec:AddTextbox("Prediction", nil, function(Value)
+	TargetAimbot.Prediction = Value
+end)
+
+local TargResolverTog = TargetAimbotSec:AddToggle("Antilock Resolver", false, function(Value)
+	TargetAimbot.Resolver = Value
+end)
+
+TargResolverTog:AddKeybind()
+
+TargetAimbotSec:AddSlider("Jump Offset", -3, 0, 3, 100, function(Value)
+	TargetAimbot.JumpOffset = Value
+	TargetAimbot.RealJumpOffset = Value
+end)
+
+TargetAimbotSec:AddDropdown("Hit-Part(s)", {"Head", "UpperTorso", "LowerTorso", "HumanoidRootPart", "RightLowerArm", "LeftLowerArm", "RightUpperArm", "LeftUpperArm", "RightUpperLeg", "LeftUpperLeg", "RightLowerLeg", "LeftLowerLeg"}, {"HumanoidRootPart"}, true, function(Value)
+	TargetAimbot.HitParts = Value
+end)
+
+TargetAimbotSec:AddToggle("Notifications", false, function(Value)
+	TargetAimbot.Notifications = Value
+end)
+
+TargetAimbotSec:AddToggle("Look At", false, function(Value)
+	TargetAimbot.LookAt = Value
+end)
+
+local ViewAtTog = TargetAimbotSec:AddToggle("View At", false, function(Value)
+	TargetAimbot.ViewAt = Value
+end)
+
+ViewAtTog:AddKeybind()
+
+local TargDotTog = TargetAimbotSec:AddToggle("Dot", false, function(Value)
+	TargetAimbot.Dot = Value
+end)
+
+TargDotTog:AddColorpicker(Color3.fromRGB(170, 120, 210), function(Value)
+	TargCursorDot.Color = Value
+	TargDotFrame.BackgroundColor3 = Value
+end)
+
+local TargTracerTog = TargetAimbotSec:AddToggle("Tracer", false, function(Value)
+	TargetAimbot.Tracer = Value
+end)
+
+TargTracerTog:AddColorpicker(Color3.fromRGB(170, 120, 210), function(Value)
+	TargTracerLine.Color = Value
+end)
+
+TargetAimbotSec:AddToggle("Dot on Cursor", false, function(Value)
+	TargetAimbot.DotOnCursor = Value
+end)
+
+local HighlightTog = TargetAimbotSec:AddToggle("Highlight", false, function(Value)
+	TargetAimbot.Highlight = Value
+end)
+
+HighlightTog:AddColorpicker(Color3.fromRGB(170, 120, 210), function(Value)
+	Highlight.FillColor = Value
+end)
+
+HighlightTog:AddColorpicker(Color3.fromRGB(90, 65, 110), function(Value)
+	Highlight.OutlineColor = Value
+end)
+
+TargetAimbotSec:AddToggle("Stats", false, function(Value)
+	TargetAimbot.Stats = Value
+end)
+
+TargetAimbotSec:AddToggle("Use FOV", false, function(Value)
+	TargetAimbot.UseFov = Value
+end)
+
+local TargFovTog = TargetAimbotSec:AddToggle("FOV Visible", false, function(Value)
+	TargFovCircle.Visible = Value
+end)
+
+TargFovTog:AddColorpicker(Color3.fromRGB(80, 15, 180), function(Value)
+	TargFovCircle.Color = Value
+end)
+
+TargetAimbotSec:AddSlider("FOV Size", 5, 80, 500, 1, function(Value)
+	TargFovCircle.Radius = Value * 2
+end)
+
+-- Camera Aimbot
+
+CameraAimbotSec:AddToggle("Enabled", false, function(Value)
+	CameraAimbot.Enabled = Value
+end)
+
+CameraAimbotSec:AddKeybind("Keybind", nil, function(Value)
+	CameraAimbot.Keybind = Value
+end)
+
+CameraAimbotSec:AddTextbox("Prediction", nil, function(Value)
+	CameraAimbot.Prediction = Value
+end)
+
+local CamResolverTog = CameraAimbotSec:AddToggle("Antilock Resolver", false, function(Value)
+	CameraAimbot.Resolver = Value
+end)
+
+CamResolverTog:AddKeybind()
+
+CameraAimbotSec:AddDropdown("Hit-Part", {"Head", "HumanoidRootPart", "UpperTorso", "LowerTorso"}, "HumanoidRootPart", false, function(Value)
+	CameraAimbot.HitPart = Value
+end)
+
+CameraAimbotSec:AddToggle("Notifications", false, function(Value)
+	CameraAimbot.Notifications = Value
+end)
+
+CameraAimbotSec:AddSlider("Jump Offset", -3, 0, 3, 100, function(Value)
+	CameraAimbot.JumpOffset = Value
+	CameraAimbot.RealJumpOffset = Value
+end)
+
+CameraAimbotSec:AddToggle("Smoothness", false, function(Value)
+	CameraAimbot.Smoothness = Value
+end)
+
+CameraAimbotSec:AddTextbox("Smoothing", nil, function(Value)
+	CameraAimbot.Smoothing = Value
+end)
+
+CameraAimbotSec:AddToggle("Use FOV", false, function(Value)
+	CameraAimbot.UseFov = Value
+end)
+
+local CamFovTog = CameraAimbotSec:AddToggle("FOV Visible", false, function(Value)
+	CamFovCircle.Visible = Value
+end)
+
+CamFovTog:AddColorpicker(Color3.fromRGB(80, 15, 180), function(Value)
+	CamFovCircle.Color = Value
+end)
+
+CameraAimbotSec:AddSlider("FOV Size", 5, 80, 500, 1, function(Value)
+	CamFovCircle.Radius = Value * 2
+end)
+
+-- MISC
+
+-- Movement
+
+local SpeedTog = MovementSec:AddToggle("Speed", false, function(Value)
+	Movement.SpeedEnabled = Value
+end)
+
+SpeedTog:AddKeybind()
+
+MovementSec:AddSlider("Speed Amount", 1, 1, 5000, 1, function(Value)
+	Movement.SpeedAmount = Value / 1000
+end)
+
+MovementSec:AddToggle("Auto Jump", false, function(Value)
+	Movement.AutoJump = Value
+end)
+
+local StrafeTog = MovementSec:AddToggle("Target Strafe", false, function(Value)
+	Movement.StrafeEnabled = Value
+end)
+
+StrafeTog:AddKeybind()
+
+MovementSec:AddSlider("Speed", 0.5, 0.5, 10, 2, function(Value)
+	Movement.StrafeSpeed = Value
+end)
+
+MovementSec:AddSlider("Distance", 1, 1, 20, 2, function(Value)
+	Movement.StrafeDistance = Value
+end)
+
+MovementSec:AddSlider("Height", 1, 1, 20, 2, function(Value)
+	Movement.StrafeHeight = Value
+end)
+
+local FlightTog = MovementSec:AddToggle("Flight", false, function(Value)
+	Movement.FlightEnabled = Value
+end)
+
+FlightTog:AddKeybind()
+
+MovementSec:AddSlider("Speed", 1, 1, 5000, 1, function(Value)
+	Movement.FlightSpeed = Value / 20
+end)
+
+-- Self Dot
+
+local SelfDotTog = SelfDotSec:AddToggle("Enabled", false, function(Value)
+	SelfDot.Enabled = Value
+end)
+
+SelfDotTog:AddColorpicker(Color3.fromRGB(170, 120, 210), function(Value)
+	SelfDotCircle.Color = Value
+end)
+
+SelfDotSec:AddToggle("Random Aim-Part", false, function(Value)
+	SelfDot.RandomAimPart = Value
+end)
+
+SelfDotSec:AddSlider("Prediction", 1, 1, 5, 2, function(Value)
+	SelfDot.Prediction = Value / 20
+end)
+
+SelfDotSec:AddDropdown("Aim-Part", {"Head", "HumanoidRootPart", "UpperTorso", "LowerTorso"}, "HumanoidRootPart", false, function(Value)
+	SelfDot.AimPart = Value
+	SelfDot.OldAimPart = Value
+end)
+
+-- Anti Lock
+
+local AntiTog = AntiLockSec:AddToggle("Enabled", false, function(Value)
+	AntiLock.Enabled = Value
+end)
+
+AntiTog:AddKeybind()
+
+AntiLockSec:AddDropdown("Mode", {"Custom", "Prediction Changer", "Prediction Disabler", "Up", "Down", "Prediction Tripler", "Prediction Reverser", "LookVector", "AirOrthodox", "Prediction Multiplier", "Spinbot Desync"}, "Custom", false, function(Value)
+	AntiLock.Mode = Value
+end)
+
+AntiLockSec:AddLabel("Custom")
+
+AntiLockSec:AddSlider("Custom X", -10000, 10000, 10000, 1, function(Value)
+	AntiLock.CustomX = Value
+end)
+
+AntiLockSec:AddSlider("Custom Y", -10000, 10000, 10000, 1, function(Value)
+	AntiLock.CustomY = Value
+end)
+
+AntiLockSec:AddSlider("Custom Z", -10000, 10000, 10000, 1, function(Value)
+	AntiLock.CustomZ = Value
+end)
+
+AntiLockSec:AddLabel("LookVector")
+
+AntiLockSec:AddSlider("LookVector Amount", -1000, 500, 1000, 1, function(Value)
+	AntiLock.LookVecAmt = Value
+end)
+
+AntiLockSec:AddLabel("Prediction Changer")
+
+AntiLockSec:AddSlider("Prediction Amount", -20, 5, 20, 1, function(Value)
+	AntiLock.PredChangeAmt = Value
+end)
+
+AntiLockSec:AddLabel("Spinbot Desync")
+
+AntiLockSec:AddDropdown("Desync Velocity", {"Default", "Sky", "Underground"}, "Default", false, function(Value)
+	if Value == "Default" then
+		AntiLock.DesyncVel = Vector3.new(9e9, 9e9, 9e9)
+	elseif Value == "Sky" then
+		AntiLock.DesyncVel = Vector3.new(15, 9e9, 15)
+	elseif Value == "Underground" then
+		AntiLock.DesyncVel = Vector3.new(15, -9e9, 15)
+	end
+end)
+
+AntiLockSec:AddSlider("Desync Angles", -50, 0.5, 50, 2, function(Value)
+	AntiLock.DesyncAngles = Value
+end)
+
+-- Code
+
+spawn(function()
+	TargetPlrStats.Name = "Actyrn#7104"
+	TargetPlrStats.Parent = game.CoreGui
+	TargetPlrStats.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+	Background.Name = "Actyrn#7104"
+	Background.Parent = TargetPlrStats
+	Background.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	Background.BorderSizePixel = 0
+	Background.Position = UDim2.new(0.388957828, 0, 0.700122297, 0)
+	Background.Size = UDim2.new(0, 358, 0, 71)
+	Background.Visible = false
+
+	Picture.Name = "Actyrn#7104"
+	Picture.Parent = Background
+	Picture.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	Picture.BorderSizePixel = 0
+	Picture.Position = UDim2.new(0.0279329624, 0, 0.0704225376, 0)
+	Picture.Size = UDim2.new(0, 59, 0, 59)
+	Picture.Transparency = 1
+	Picture.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+
+	Top.Name = "Actyrn#7104"
+	Top.Parent = Background
+	Top.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	Top.BorderSizePixel = 0
+	Top.Position = UDim2.new(0, 0, -0.101449274, 0)
+	Top.Size = UDim2.new(0, 358, 0, 7)
+
+	UIGradient1.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(185, 160, 230)), ColorSequenceKeypoint.new(1, Color3.fromRGB(102, 88, 156))}
+	UIGradient1.Rotation = 90
+	UIGradient1.Parent = Top
+
+	UIGradient2.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 50)), ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))}
+	UIGradient2.Rotation = 90
+	UIGradient2.Parent = Background
+
+	UIGradient3.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(60, 60, 60)), ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 30))}
+	UIGradient3.Rotation = 90
+	UIGradient3.Parent = HealthBarBackground
+
+	UIGradient4.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(185, 160, 230)), ColorSequenceKeypoint.new(1, Color3.fromRGB(102, 88, 156))}
+	UIGradient4.Rotation = 90
+	UIGradient4.Parent = HealthBar
+
+	HealthBarBackground.Name = "Actyrn#7104"
+	HealthBarBackground.Parent = Background
+	HealthBarBackground.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	HealthBarBackground.BorderSizePixel = 0
+	HealthBarBackground.Position = UDim2.new(0.215083793, 0, 0.348234326, 0)
+	HealthBarBackground.Size = UDim2.new(0, 270, 0, 19)
+	HealthBarBackground.Transparency = 1
+
+	HealthBar.Name = "Actyrn#7104"
+	HealthBar.Parent = HealthBarBackground
+	HealthBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	HealthBar.BorderSizePixel = 0
+	HealthBar.Position = UDim2.new(-0.00336122862, 0, 0.164894029, 0)
+	HealthBar.Size = UDim2.new(0, 130, 0, 19)
+
+	NameOfTarget.Name = "Actyrn#7104"
+	NameOfTarget.Parent = Background
+	NameOfTarget.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	NameOfTarget.BackgroundTransparency = 1
+	NameOfTarget.Position = UDim2.new(0.220670387, 0, 0.0704225376, 0)
+	NameOfTarget.Size = UDim2.new(0, 268, 0, 19)
+	NameOfTarget.Font = Enum.Font.Code
+	NameOfTarget.TextColor3 = Color3.fromRGB(255, 255, 255)
+	NameOfTarget.TextScaled = true
+	NameOfTarget.TextSize = 14
+	NameOfTarget.TextStrokeTransparency = 0
+	NameOfTarget.TextWrapped = true
+
+	SelfDotCircle.Filled = true
+	SelfDotCircle.Thickness = 1
+	SelfDotCircle.Transparency = 1
+	SelfDotCircle.Radius = 7
+
+	TargCursorDot.Filled = true
+	TargCursorDot.Thickness = 2
+	TargCursorDot.Radius = 7
+
+	TargDotBillboard.Name = "Actyrn#7104"
+	TargDotBillboard.Adornee = TargDotParent
+	TargDotBillboard.Size = UDim2.new(0.6, 0, 0.6, 0)
+	TargDotBillboard.AlwaysOnTop = true
+
+	TargDotFrame.Size = UDim2.new(1, 0, 1, 0)
+	TargDotFrame.BackgroundTransparency = 0
+
+	TargDotUiCorner.CornerRadius = UDim.new(50, 50)
+
+	TargDotParent.CanCollide = false
+	TargDotParent.Anchored = true
+	TargDotParent.Transparency = 1
+
+	TargFovCircle.Filled = false
+	TargFovCircle.Thickness = 1
+	TargFovCircle.Transparency = 1
+
+	CamFovCircle.Filled = false
+	CamFovCircle.Thickness = 1
+	CamFovCircle.Transparency = 1
+
+	TargTracerLine.Thickness = 2
+end)
+
+-- Heartbeat Functions
+
+spawn(function()
+	RunService.Heartbeat:Connect(function()
+		if TargetAimbot.Enabled and TargBindEnabled and TargetAimbot.LookAt then
+			Player.Character.HumanoidRootPart.CFrame = CFrame.new(Player.Character.HumanoidRootPart.CFrame.Position, Vector3.new(TargetPlr.Character.HumanoidRootPart.CFrame.X, Player.Character.HumanoidRootPart.CFrame.Position.Y, TargetPlr.Character.HumanoidRootPart.CFrame.Z))
+		end
+	end)
+end)
+
+spawn(function()
+	RunService.Heartbeat:Connect(function()
+		if TargetAimbot.Enabled and TargBindEnabled and TargetAimbot.Dot  then
+			TargCursorDot.Visible = false
+
+			if TargetAimbot.Resolver then
+				TargDotParent.CFrame = CFrame.new(TargetPlr.Character[TargetAimbot.RealHitPart].Position + (TargetPlr.Character.Humanoid.MoveDirection * TargetAimbot.Prediction * (TargetPlr.Character.Humanoid.WalkSpeed or 16)))
+			else
+				TargDotParent.CFrame = CFrame.new(TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].Velocity * TargetAimbot.Prediction))
+			end
+		else
+			TargDotParent.CFrame = CFrame.new(0, 9999, 0)
+
+			if TargetAimbot.DotOnCursor and not TargBindEnabled then
+				TargCursorDot.Visible = true
+				TargCursorDot.Position = UserInputService:GetMouseLocation()
+			else
+				TargCursorDot.Visible = false
+			end
+		end
+	end)
+end)
+
+spawn(function()
+	RunService.Heartbeat:Connect(function() 
+		local Pos, OnScreen
+
+		if TargetAimbot.Resolver then
+			Pos, OnScreen = workspace.CurrentCamera:WorldToViewportPoint(TargetPlr.Character[TargetAimbot.RealHitPart].Position + (TargetPlr.Character.Humanoid.MoveDirection * TargetAimbot.Prediction * TargetPlr.Character.Humanoid.WalkSpeed or 16))
+		else
+			Pos, OnScreen = workspace.CurrentCamera:WorldToViewportPoint(TargetPlr.Character[TargetAimbot.RealHitPart].Position + (TargetPlr.Character[TargetAimbot.RealHitPart].Velocity * TargetAimbot.Prediction))
+		end
+
+		if TargetAimbot.Enabled and TargBindEnabled and TargetAimbot.Tracer and OnScreen then
+			TargTracerLine.Visible = true
+			TargTracerLine.From = UserInputService:GetMouseLocation()
+			TargTracerLine.To = Vector2.new(Pos.X, Pos.Y)
+		else
+			TargTracerLine.Visible = false
+		end
+	end)
+end)
+
+spawn(function()
+	RunService.Heartbeat:Connect(function()
+		if TargetAimbot.Enabled and TargBindEnabled and TargetAimbot.Stats then
+			Background.Visible = true
+			NameOfTarget.Text = tostring(TargetPlr.Character.Humanoid.DisplayName).." ["..tostring(TargetPlr.Name).."]"
+			Picture.Image = "rbxthumb://type=AvatarHeadShot&id=" ..TargetPlr.UserId.. "&w=420&h=420"
+			HealthBar:TweenSize(UDim2.new(TargetPlr.Character.Humanoid.Health / TargetPlr.Character.Humanoid.MaxHealth, 0, 1, 0), "In", "Linear", 0.25)
+		else
+			Background.Visible = false
+		end
+	end)
+end)
+
+spawn(function()
+	RunService.Heartbeat:Connect(function()
+		Player.Character.Humanoid.UseJumpPower = not Utilities.NoJumpCooldown
+	end)
+end)
+
+spawn(function()
+	RunService.Heartbeat:Connect(function()
+		if Utilities.AntiStomp and Player.Character.Humanoid.Health <= 5 then
+			Player.Character.Humanoid:Destroy()
+		end
+	end)
+end)
+
+spawn(function()
+	RunService.Heartbeat:Connect(function()
+		if Utilities.NoSlowdown then
+			local SlowdownEffects = Player.Character.BodyEffects.Movement:FindFirstChild("NoJumping") or Player.Character.BodyEffects.Movement:FindFirstChild("ReduceWalk") or Player.Character.BodyEffects.Movement:FindFirstChild("NoWalkSpeed")
+
+			if SlowdownEffects then
+				SlowdownEffects:Destroy()
+			end
+
+			if Player.Character.BodyEffects.Reload.Value then
+				Player.Character.BodyEffects.Reload.Value = false
+			end
+		end
+	end)
+end)
+
+spawn(function()
+	RunService.Heartbeat:Connect(function()
+		if Movement.SpeedEnabled then
+			Player.Character.HumanoidRootPart.CFrame = Player.Character.HumanoidRootPart.CFrame + Player.Character.Humanoid.MoveDirection * Movement.SpeedAmount
+		end
+	end)
+end)
+
+spawn(function()
+	RunService.Heartbeat:Connect(function()
+		if TargetAimbot.Enabled and TargBindEnabled and Movement.StrafeEnabled then
+			StrafeSpeed = StrafeSpeed + Movement.StrafeSpeed
+
+			Player.Character.HumanoidRootPart.CFrame = TargetPlr.Character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(StrafeSpeed), 0) * CFrame.new(0, Movement.StrafeHeight, Movement.StrafeDistance)
+		end
+	end)
+end)
+
+spawn(function()
+	RunService.Heartbeat:Connect(function()
+		if Movement.AutoJump and Player.Character.Humanoid:GetState() ~= Enum.HumanoidStateType.Freefall and Player.Character.Humanoid.MoveDirection.Magnitude > 0 then
+			Player.Character.Humanoid:ChangeState("Jumping")
+			NoJumpCdToggle:Set(true)
+		end
+	end)
+end)
+
+spawn(function()
+	RunService.Heartbeat:Connect(function()
+		pcall(function()
+			if Movement.FlightEnabled then
+				local FlyVelocity = Vector3.new(0, 0.9, 0)
+
+				if not UserInputService:GetFocusedTextBox() then
+
+					if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+						FlyVelocity = FlyVelocity + (workspace.CurrentCamera.CoordinateFrame.lookVector * Movement.FlightSpeed)
+					end
+
+					if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+						FlyVelocity = FlyVelocity + (workspace.CurrentCamera.CoordinateFrame.rightVector * -Movement.FlightSpeed)
+					end
+
+					if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+						FlyVelocity = FlyVelocity + (workspace.CurrentCamera.CoordinateFrame.lookVector * -Movement.FlightSpeed)
+					end
+
+					if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+						FlyVelocity = FlyVelocity + (workspace.CurrentCamera.CoordinateFrame.rightVector * Movement.FlightSpeed)
+					end
+				end
+
+				Player.Character.HumanoidRootPart.Velocity = FlyVelocity
+				Player.Character.Humanoid:ChangeState("Freefall")
+			else
+				Player.Character.Humanoid:ChangeState("Landing")
+			end
+		end)
+	end)
+end)
+
+spawn(function()
+	RunService.Heartbeat:Connect(function()
+		local Pos, OnScreen = workspace.CurrentCamera:WorldToViewportPoint(Player.Character[SelfDot.AimPart].Position + (Player.Character[SelfDot.AimPart].AssemblyLinearVelocity * SelfDot.Prediction))
+
+		if SelfDot.Enabled and OnScreen then
+			SelfDotCircle.Visible = true
+			SelfDotCircle.Position = Vector2.new(Pos.X, Pos.Y)
+		else
+			SelfDotCircle.Visible = false
+		end
+	end)
+end)
+
+spawn(function()
+	RunService.Heartbeat:Connect(function()
+		local Char = Player.Character
+		local Hrp = Char.HumanoidRootPart
+
+		if AntiLock.Enabled then
+			local Vel, AlVel = Hrp.Velocity, Hrp.AssemblyLinearVelocity
+
+			if AntiLock.Mode == "Custom" then
+				Hrp.Velocity = Vector3.new(AntiLock.CustomX, AntiLock.CustomY, AntiLock.CustomZ)
+				RunService.RenderStepped:Wait()
+				Hrp.Velocity = Vel
+
+			elseif AntiLock.Mode == "Prediction Changer" then
+				Hrp.Velocity = Vel * AntiLock.PredChangeAmt
+				RunService.RenderStepped:Wait()
+				Hrp.Velocity = Vel
+
+			elseif AntiLock.Mode == "Prediction Disabler" then
+				Hrp.Velocity = Vel * 0
+				RunService.RenderStepped:Wait()
+				Hrp.Velocity = Vel
+
+			elseif AntiLock.Mode == "Up" then
+				Hrp.Velocity = Vector3.new(0, 9e9, 0)
+				RunService.RenderStepped:Wait()
+				Hrp.Velocity = Vel
+
+			elseif AntiLock.Mode == "Down" then
+				Hrp.Velocity = Vector3.new(0, -9e9, 0)
+				RunService.RenderStepped:Wait()
+				Hrp.Velocity = Vel
+
+			elseif AntiLock.Mode == "Prediction Tripler" then
+				Hrp.Velocity = Vel * 3
+				RunService.RenderStepped:Wait()
+				Hrp.Velocity = Vel
+
+			elseif AntiLock.Mode == "Prediction Reverser" then
+				Hrp.Velocity = Vel * -1
+				RunService.RenderStepped:Wait()
+				Hrp.Velocity = Vel
+
+			elseif AntiLock.Mode == "LookVector" then
+				Hrp.Velocity = Hrp.CFrame.lookVector * AntiLock.LookVecAmt
+				RunService.RenderStepped:Wait()
+				Hrp.Velocity = Vel
+
+			elseif AntiLock.Mode == "AirOrthodox" then
+				Hrp.Velocity = Vector3.new(77, 77, 77)
+				RunService.RenderStepped:Wait()
+				Hrp.Velocity = Vel
+
+			elseif AntiLock.Mode == "Prediction Multiplier" then
+				Hrp.Velocity = Vel * 7
+				RunService.RenderStepped:Wait()
+				Hrp.Velocity = Vel
+
+			elseif AntiLock.Mode == "Spinbot Desync" then
+				Hrp.AssemblyLinearVelocity = AntiLock.DesyncVel
+				Hrp.CFrame = Hrp.CFrame * CFrame.Angles(0, math.rad(AntiLock.DesyncAngles), 0)
+				RunService.RenderStepped:Wait()
+				Hrp.AssemblyLinearVelocity = AlVel
+			end
+		end
+	end)
+end)
+
+-- Stepped Functions
+
+spawn(function()
+	RunService.Stepped:Connect(function()
+		if TargetPlr.Character.Humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+			TargetAimbot.RealJumpOffset = TargetAimbot.JumpOffset
+		else
+			TargetAimbot.RealJumpOffset = 0
+		end
+	end)
+end)
+
+spawn(function()
+	RunService.Stepped:Connect(function()
+		TargetAimbot.RealHitPart = TargetAimbot.HitParts[math.random(1, #TargetAimbot.HitParts)]
+		wait(0.6)
+	end)
+end)
+
+spawn(function()
+	RunService.Stepped:Connect(function()
+		if CamlockPlr.Character.Humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+			CameraAimbot.RealJumpOffset = CameraAimbot.JumpOffset
+		else
+			CameraAimbot.RealJumpOffset = 0
+		end
+	end)
+end)
+
+spawn(function()
+	RunService.Stepped:Connect(function()
+		if SelfDot.RandomAimPart then
+			local RandomParts = {"Head", "UpperTorso", "LowerTorso", "HumanoidRootPart", "RightUpperLeg", "LeftUpperLeg", "RightUpperArm", "LeftUpperArm"}
+			SelfDot.AimPart = RandomParts[math.random(1, #RandomParts)]
+			wait(0.6)
+		else
+			SelfDot.AimPart = SelfDot.OldAimPart
+		end
+	end)
+end)
+
+-- RenderStepped Functions
+
+spawn(function()
+	RunService.RenderStepped:Connect(function()
+		if TargetAimbot.Enabled and TargBindEnabled and TargetAimbot.ViewAt then
+			workspace.CurrentCamera.CameraSubject = TargetPlr.Character.Humanoid
+		else
+			workspace.CurrentCamera.CameraSubject = Player.Character.Humanoid
+		end
+	end)
+end)
+
+spawn(function()
+	RunService.RenderStepped:Connect(function()
+		if TargetAimbot.Enabled and TargBindEnabled and TargetAimbot.Highlight then
+			Highlight.Parent = TargetPlr.Character
+		else
+			Highlight.Parent = game.CoreGui
+		end
+	end)
+end)
+
+spawn(function()
+	RunService.RenderStepped:Connect(function()
+		TargFovCircle.Position = UserInputService:GetMouseLocation()
+	end)
+end)
+
+spawn(function()
+	RunService.RenderStepped:Connect(function()
+		if CameraAimbot.Enabled and CamBindEnabled then
+			if CameraAimbot.Resolver then
+				if CameraAimbot.Smoothness then
+					workspace.CurrentCamera.CFrame = workspace.CurrentCamera.CFrame:Lerp(CFrame.new(workspace.CurrentCamera.CFrame.p, 
+						CamlockPlr.Character[CameraAimbot.HitPart].Position + 
+							CamlockPlr.Character.Humanoid.MoveDirection * CameraAimbot.Prediction * (CamlockPlr.Character.Humanoid.WalkSpeed or 16)), 
+						CameraAimbot.Smoothing, Enum.EasingStyle["Linear"], Enum.EasingDirection["InOut"])
+				else
+					workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.p, 
+						CamlockPlr.Character[CameraAimbot.HitPart].Position + 
+							CamlockPlr.Character.Humanoid.MoveDirection * CameraAimbot.Prediction * (CamlockPlr.Character.Humanoid.WalkSpeed or 16))
+				end
+			else
+				if CameraAimbot.Smoothness then
+					workspace.CurrentCamera.CFrame = workspace.CurrentCamera.CFrame:Lerp(CFrame.new(workspace.CurrentCamera.CFrame.p, 
+						CamlockPlr.Character[CameraAimbot.HitPart].Position + Vector3.new(0, CameraAimbot.RealJumpOffset, 0) + 
+							CamlockPlr.Character[CameraAimbot.HitPart].Velocity * CameraAimbot.Prediction), 
+						CameraAimbot.Smoothing, Enum.EasingStyle["Linear"], Enum.EasingDirection["InOut"])
+				else
+					workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.p, 
+						CamlockPlr.Character[CameraAimbot.HitPart].Position + Vector3.new(0, CameraAimbot.RealJumpOffset, 0) + 
+							CamlockPlr.Character[CameraAimbot.HitPart].Velocity * CameraAimbot.Prediction)
+				end
+			end
+		end
+	end)
+end)
+
+spawn(function()
+	RunService.RenderStepped:Connect(function()
+		CamFovCircle.Position = UserInputService:GetMouseLocation()
+	end)
+end)
+
+-- InputBegan Functions
+
+spawn(function()
+	UserInputService.InputBegan:Connect(function(Key)
+		if Key.KeyCode == TargetAimbot.Keybind and TargetAimbot.Enabled and not UserInputService:GetFocusedTextBox() then
+			TargBindEnabled = not TargBindEnabled
+
+			if TargBindEnabled then
+				TargetPlr = ClosestPlr(TargetAimbot.UseFov, TargFovCircle)
+
+				if TargetAimbot.Notifications then
+					NotifLib.Notify({
+						Title = "Azure Modded [Actyrn#7104]", 
+						Description = "Targeting: " ..tostring(TargetPlr.Character.Humanoid.DisplayName), 
+						Duration = 3
+					})
+				end
+			else
+				if TargetAimbot.Notifications then
+					NotifLib.Notify({
+						Title = "Azure Modded [Actyrn#7104]", 
+						Description = "Untargeting: " ..tostring(TargetPlr.Character.Humanoid.DisplayName), 
+						Duration = 3
+					})
+				end
+			end
+		end
+	end)
+end)
+
+spawn(function()
+	UserInputService.InputBegan:Connect(function(Key)
+		if Key.KeyCode == CameraAimbot.Keybind and CameraAimbot.Enabled and not UserInputService:GetFocusedTextBox() then
+			CamBindEnabled = not CamBindEnabled
+
+			if CamBindEnabled then
+				CamlockPlr = ClosestPlr(CameraAimbot.UseFov, CamFovCircle)
+
+				if CameraAimbot.Notifications then
+					NotifLib.Notify({
+						Title = "Azure Modded [Actyrn#7104]", 
+						Description = "Targeting: " ..tostring(CamlockPlr.Character.Humanoid.DisplayName), 
+						Duration = 3
+					})
+				end
+			else
+				if CameraAimbot.Notifications then
+					NotifLib.Notify({
+						Title = "Azure Modded [Actyrn#7104]", 
+						Description = "Untargeting: " ..tostring(CamlockPlr.Character.Humanoid.DisplayName), 
+						Duration = 3
+					})
+				end
+			end
+		end
+	end)
+end)
+
+-- Hookmetamethod functions
+
+AntiCheatNamecall = hookmetamethod(game, "__namecall", function(Self, ...)
+	local Args = {...}
+	local Table = {"BreathingHAMON", "TeleportDetect", "JJARC", "TakePoisonDamage", "CHECKER_1", "CHECKER", "GUI_CHECK", "OneMoreTime", "checkingSPEED", "BANREMOTE", "PERMAIDBAN", "KICKREMOTE", "BR_KICKPC", "FORCEFIELD", "Christmas_Sock", "VirusCough", "Symbiote", "Symbioted"}
+
+	if table.find(Table, Args[1]) then
+		return
+	end
+
+	return AntiCheatNamecall(Self, ...)
+end)
+
+TargNamecall = hookmetamethod(game, "__namecall", function(...)
+	local Args = {...}
+	local Table = {"UpdateMousePos", "GetMousePos", "MousePos"}
+
+	if TargetAimbot.Enabled and TargBindEnabled and getnamecallmethod() == "FireServer" and table.find(Table, Args[2]) then
+		if TargetAimbot.Resolver then
+			Args[3] = TargetPlr.Character[TargetAimbot.RealHitPart].Position + 
+				(TargetPlr.Character.Humanoid.MoveDirection * TargetAimbot.Prediction * (TargetPlr.Character.Humanoid.WalkSpeed or 16))
+		else
+			Args[3] = TargetPlr.Character[TargetAimbot.RealHitPart].Position + 
+				Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].Velocity * TargetAimbot.Prediction)
+		end
+
+		return TargNamecall(unpack(Args))
+	end
+
+	return TargNamecall(...)
+end)
+
+NoRecIndex = hookmetamethod(game, "__newindex", function(Self, Index, Value)
+	if tostring(getcallingscript()) == "Framework" and tostring(Self):lower():find("camera") and tostring(Index) == "CFrame" then
+		return
+	end
+
+	return NoRecIndex(Self, Index, Value)
+end)
